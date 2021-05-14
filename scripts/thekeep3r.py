@@ -1,4 +1,5 @@
 from ape_safe import ApeSafe
+from brownie import web3
 
 THE_KEEP3R = "0x0D5Dc686d0a2ABBfDaFDFb4D0533E886517d4E83" # msig address
 
@@ -171,6 +172,29 @@ def send_slp():
     slp.transfer(burner, amount)
 
     assert slp.balanceOf(burner) == amount
+
+    safe_tx = safe.multisend_from_receipts()
+    safe.preview(safe_tx, call_trace=True)
+    safe.post_transaction(safe_tx)
+
+
+def set_ens():
+    '''
+        Add ens thekeep3r.eth for multisig address
+    '''
+    safe = ApeSafe("0x0D5Dc686d0a2ABBfDaFDFb4D0533E886517d4E83")
+
+    assert safe.address == THE_KEEP3R
+
+    ens = safe.contract("0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e")
+    resolver = safe.contract("0x4976fb03C32e5B8cfe2b6cCB31c09Ba78EBaBa41")
+
+    ens.setOwner(web3.ens.namehash("thekeep3r.eth"), safe.address)
+    ens.setResolver(web3.ens.namehash("thekeep3r.eth"), resolver)
+    resolver.setAddr(web3.ens.namehash("thekeep3r.eth"), safe.address)
+
+    assert web3.ens.resolve("thekeep3r.eth") == safe.address
+    assert web3.ens.resolve("thekeep3r.eth") == THE_KEEP3R
 
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx, call_trace=True)

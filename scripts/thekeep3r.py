@@ -199,3 +199,27 @@ def set_ens():
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx, call_trace=True)
     safe.post_transaction(safe_tx)
+
+
+def slash_keep3r():
+    '''
+        Slash keep3r and pull his bond
+    '''
+    safe = ApeSafe(web3.ens.resolve("thekeep3r.eth"))
+
+    assert safe.address == THE_KEEP3R
+
+    keep3r = safe.contract("0x1cEB5cB57C4D4E2b2433641b95Dd330A33185A44")
+    abuser = "0x6352f8C749954c9Df198cf72976E48994A77cCE2"
+
+    before = keep3r.balanceOf(safe.address)
+    amount = keep3r.bonds(abuser, keep3r)
+
+    # blacklist and slash, blacklist is irreversible
+    keep3r.revoke(abuser)
+
+    assert before + amount == keep3r.balanceOf(safe.address)
+
+    safe_tx = safe.multisend_from_receipts()
+    safe.preview(safe_tx, call_trace=True)
+    safe.post_transaction(safe_tx)

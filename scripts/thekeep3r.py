@@ -44,13 +44,14 @@ def sushi_to_usdp():
     '''
         Pull SUSHI rewards from KP3R-ETH, stake them as xSUSHI and pull USDP from unit
     '''
-    safe = ApeSafe("0x0D5Dc686d0a2ABBfDaFDFb4D0533E886517d4E83")
+    safe = ApeSafe("thekeep3r.eth")
 
     assert safe.address == THE_KEEP3R
 
     # contracts from https://docs.unit.xyz/docs/contracts
     unit_vault = safe.contract("0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19")
     unit_cdp_manager = safe.contract("0x0e13ab042eC5AB9Fc6F43979406088B9028F66fA")
+    unit_cdp_viewer = safe.contract("0x6C3B5C2477AE2BcF9C4244BC8A019a8f6f4eC231")
 
     sushi_chief = safe.contract("0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd")
 
@@ -72,9 +73,9 @@ def sushi_to_usdp():
     sushi.approve(xsushi, sushi.balanceOf(safe.address))
     xsushi.enter(sushi.balanceOf(safe.address))
 
-    # open unit cdp, lock all xsushi, and draw 5k usdp
+    # open unit cdp, lock all xsushi, and draw usdp
     lock_xsushi = xsushi.balanceOf(safe.address)
-    draw_usdp = 5_000 * 10 ** usdp.decimals() # TODO:
+    draw_usdp = 36_000 * 10 ** usdp.decimals() # TODO:
     xsushi.approve(unit_vault, lock_xsushi)
     # NOTE: need approval to vault address
     unit_cdp_manager.join(xsushi, lock_xsushi, draw_usdp)
@@ -97,8 +98,12 @@ def sushi_to_usdp():
     xsushi_locked = cdp_parameters["cdp"]["collateral"]
     usdp_minted = cdp_parameters["cdp"]["debt"]
 
-    assert xsushi_locked == lock_xsushi
-    assert usdp_minted == draw_usdp
+    # doesn't hold true for consecutive lockups
+    # assert xsushi_locked == lock_xsushi
+    # assert usdp_minted == draw_usdp
+
+    print ("xsushi locked:", xsushi_locked)
+    print ("usdp minted:", usdp_minted)
 
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx, call_trace=True)

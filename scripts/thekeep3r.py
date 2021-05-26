@@ -91,8 +91,8 @@ def sushi_to_usdp():
     assert curve_usdp_lp.balanceOf(safe.address) > 0 # lp tokens acquired
 
     # deposit into yearn vault
-    curve_usdp_lp.approve(yusdp3crv, draw_usdp)
-    yusdp3crv.deposit(draw_usdp)
+    curve_usdp_lp.approve(yusdp3crv, curve_usdp_lp.balanceOf(safe.account))
+    yusdp3crv.deposit(curve_usdp_lp.balanceOf(safe.account))
 
     cdp_parameters = unit_cdp_viewer.getCollateralParameters(xsushi, safe.address)
     xsushi_locked = cdp_parameters["cdp"]["collateral"]

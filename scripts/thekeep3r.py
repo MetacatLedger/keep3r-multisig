@@ -24,7 +24,7 @@ def sushi_to_xsushi():
     curve_usdp_pool = safe.contract('0x42d7025938bEc20B69cBae5A77421082407f053A')
     curve_usdp_lp = safe.contract('0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6')
     # yearn
-    yusdp3crv = safe.contract('0x1B5eb1173D2Bf770e50F10410C9a96F7a8eB6e75')
+    yusdp3crv = safe.contract('0xC4dAf3b5e2A9e93861c3FBDd25f1e943B8D87417')
 
     # restake sushi in xsushi
     _pid = 58 # KP3R-ETH
@@ -62,7 +62,7 @@ def sushi_to_usdp():
     curve_usdp_pool = safe.contract('0x42d7025938bEc20B69cBae5A77421082407f053A')
     curve_usdp_lp = safe.contract('0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6')
     # yearn
-    yusdp3crv = safe.contract('0x1B5eb1173D2Bf770e50F10410C9a96F7a8eB6e75')
+    yusdp3crv = safe.contract('0xC4dAf3b5e2A9e93861c3FBDd25f1e943B8D87417')
 
     # restake sushi in xsushi
     _pid = 58 # KP3R-ETH
@@ -75,7 +75,7 @@ def sushi_to_usdp():
 
     # open unit cdp, lock all xsushi, and draw usdp
     lock_xsushi = xsushi.balanceOf(safe.address)
-    draw_usdp = 36_000 * 10 ** usdp.decimals() # TODO:
+    draw_usdp = 136_000 * 10 ** usdp.decimals() # TODO:
     xsushi.approve(unit_vault, lock_xsushi)
     # NOTE: need approval to vault address
     unit_cdp_manager.join(xsushi, lock_xsushi, draw_usdp)
@@ -92,11 +92,14 @@ def sushi_to_usdp():
 
     # deposit into yearn vault
     curve_usdp_lp.approve(yusdp3crv, draw_usdp)
-    yusdp3crv.depositAll()
+    yusdp3crv.deposit(draw_usdp)
 
     cdp_parameters = unit_cdp_viewer.getCollateralParameters(xsushi, safe.address)
     xsushi_locked = cdp_parameters["cdp"]["collateral"]
     usdp_minted = cdp_parameters["cdp"]["debt"]
+
+    liquidation_price = unit_cdp_manager.liquidationPrice_q112(xsushi, safe.account) / unit_cdp_manager.Q112()
+    print("Liquidation price:", liquidation_price)
 
     # doesn't hold true for consecutive lockups
     # assert xsushi_locked == lock_xsushi
@@ -130,11 +133,14 @@ def repay_xsushi_usdp():
     curve_usdp_pool = safe.contract('0x42d7025938bEc20B69cBae5A77421082407f053A')
     curve_usdp_lp = safe.contract('0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6')
     # yearn
-    yusdp3crv = safe.contract('0x1B5eb1173D2Bf770e50F10410C9a96F7a8eB6e75')
+    yusdp3crv = safe.contract('0xC4dAf3b5e2A9e93861c3FBDd25f1e943B8D87417')
 
     # pull amount of tokens locked
     cdp_parameters = unit_cdp_viewer.getCollateralParameters(xsushi, safe.address)
     xsushi_locked = cdp_parameters["cdp"]["collateral"]
+
+    liquidation_price = unit_cdp_manager.liquidationPrice_q112(xsushi, safe.account) / unit_cdp_manager.Q112()
+    print("Liquidation price:", liquidation_price)
 
     # check that owner and tokens are correct
     assert xsushi_locked > 0
